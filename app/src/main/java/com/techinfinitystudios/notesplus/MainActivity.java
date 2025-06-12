@@ -63,7 +63,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.notesRecyclerView);
 
         int screenWidthDp = getResources().getConfiguration().screenWidthDp;
-        int spanCount = screenWidthDp / 180;
+
+        int spanCount = Math.max(1, screenWidthDp / 160);
         noteList = new ArrayList<>();
         adapter = new NoteAdapter(noteList, dbHelper);
         recyclerView.setAdapter(adapter);
@@ -146,6 +147,11 @@ public class MainActivity extends AppCompatActivity {
                 showNotes();
                 dialog.dismiss();
                 });
+
+        });
+
+        adapter.setOnNoteLongClickListener((note, position) -> {
+            //Allow user to select notes to delete
 
         });
 
