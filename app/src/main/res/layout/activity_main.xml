@@ -8,8 +8,46 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     android:background="@color/white"
-
     android:fitsSystemWindows="true">
+
+    <!-- Multi-Select Toolbar -->
+    <!-- Multi-Select Toolbar -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/multiSelectToolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Back Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/multiCancelButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:backgroundTint="@color/ic_launcher_background"
+            android:contentDescription="Cancel Selection"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Delete Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/multiDeleteButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:contentDescription="Delete Selected Notes"
+            android:src="@android:drawable/ic_menu_delete"
+            android:backgroundTint="@color/ic_launcher_background"
+            app:tint="@android:color/black"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- RecyclerView for Notes -->
     <androidx.recyclerview.widget.RecyclerView
@@ -18,11 +56,10 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:layout_margin="8dp"
-
         android:background="@color/white"
         android:padding="12dp"
         android:scrollbars="vertical"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/multiSelectToolbar"
         app:layout_constraintBottom_toTopOf="@+id/fabLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,8 +75,7 @@
         android:layout_margin="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:fitsSystemWindows="true"
-        >
+        android:fitsSystemWindows="true">
 
         <!-- Filter Button -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton

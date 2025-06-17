@@ -1,5 +1,6 @@
 package com.techinfinitystudios.notesplus;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,9 +12,13 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -28,13 +33,15 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
-    private FloatingActionButton createNoteButton;
+    private FloatingActionButton addNoteButton, multiDeleteButton, multiCancelButton, filterButton;
     private List<Note> noteList;
+    private List<Note> selectedNotes;
     private NoteAdapter adapter;
 
     private RecyclerView recyclerView;
     private String filter = "";
     private String click = "0";
+    private boolean multiSelectMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +66,14 @@ public class MainActivity extends AppCompatActivity {
 
 
         dbHelper = new DatabaseHelper(this);
-        createNoteButton = findViewById(R.id.addNoteButton);
+        addNoteButton = findViewById(R.id.addNoteButton);
         recyclerView = findViewById(R.id.notesRecyclerView);
+
+        multiDeleteButton = findViewById(R.id.multiDeleteButton);
+        multiCancelButton = findViewById(R.id.multiCancelButton);
+        selectedNotes = new ArrayList<>();
+
+        ConstraintLayout constraintLayout = findViewById(R.id.multiSelectToolbar);
 
         int screenWidthDp = getResources().getConfiguration().screenWidthDp;
 
@@ -71,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         showNotes();
 
-        FloatingActionButton filterButton = findViewById(R.id.filterButton);
+        filterButton = findViewById(R.id.filterButton);
 
         filterButton.setOnClickListener(view -> {
 
@@ -79,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
             popupMenu.getMenuInflater().inflate(R.menu.filter_menu, popupMenu.getMenu());
             popupMenu.show();
             popupMenu.setOnMenuItemClickListener(item -> {
-                    if (item.getItemId() == R.id.filter_date){
+
+                if (item.getItemId() == R.id.filter_date){
                         filter = "date";
                         saveFilter(filter);
                     } else if (item.getItemId() == R.id.filter_title) {
@@ -89,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if(click.equals("0")){
                     click = "1";
+
                     saveClick(click);
                 }
                 else {
@@ -103,56 +118,153 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        createNoteButton.setOnClickListener(v -> {
-            Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-            dialog.setContentView(R.layout.activity_edit_note);
-            dialog.show();
 
-            ImageButton backButton = dialog.findViewById(R.id.backButton);
-            EditText noteTitle = dialog.findViewById(R.id.noteTitle);
-            EditText noteText = dialog.findViewById(R.id.noteText);
-            backButton.setOnClickListener(v1 -> {
+            addNoteButton.setOnClickListener(v -> {
+                if (multiSelectMode) return;
+                Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                dialog.setContentView(R.layout.activity_edit_note);
+                dialog.show();
+
+                ImageButton backButton = dialog.findViewById(R.id.backButton);
+                ImageButton deleteButton = dialog.findViewById(R.id.deleteButton);
+                EditText noteTitle = dialog.findViewById(R.id.noteTitle);
+                EditText noteText = dialog.findViewById(R.id.noteText);
+
+                deleteButton.setVisibility(View.GONE);
+
+                backButton.setOnClickListener(v1 -> {
+                    String title = noteTitle.getText().toString();
+                    String text = noteText.getText().toString();
+
+                    if (!text.isEmpty() || !title.isEmpty()) {
+                        dbHelper.insertNote(title, text);
+                        showNotes();
+                        dialog.dismiss();
+                    } else {
+                        dialog.dismiss();
+                    }
+
+
+                });
+
+                dialog.setOnKeyListener((dialog1, keyCode, event) -> {
+                    if (keyCode == android.view.KeyEvent.KEYCODE_BACK) {
                         String title = noteTitle.getText().toString();
                         String text = noteText.getText().toString();
 
-                        if (!text.isEmpty() || !title.isEmpty()){
+                        if (!text.isEmpty() || !title.isEmpty()) {
                             dbHelper.insertNote(title, text);
                             showNotes();
                             dialog.dismiss();
-                        }
-                        else{
+                        } else {
                             dialog.dismiss();
                         }
 
+                    }
+                    return false;
+                });
+            });
+            adapter.setNoteOnClickListener((note, position) -> {
 
+                if (!multiSelectMode) {
+
+                    Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                    dialog.setContentView(R.layout.activity_edit_note);
+                    dialog.show();
+
+                    ImageButton backButton = dialog.findViewById(R.id.backButton);
+                    ImageButton deleteButton = dialog.findViewById(R.id.deleteButton);
+                    EditText noteTitle = dialog.findViewById(R.id.noteTitle);
+                    EditText noteText = dialog.findViewById(R.id.noteText);
+
+                    noteTitle.setText(note.getTitle());
+                    noteText.setText(note.getText());
+
+                    backButton.setOnClickListener(v1 -> {
+                        String title = noteTitle.getText().toString();
+                        String text = noteText.getText().toString();
+                        dbHelper.updateNote(note.getId(), title, text);
+                        showNotes();
+                        dialog.dismiss();
+                    });
+                    deleteButton.setOnClickListener(v1 -> {
+                        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                        alertDialog.setTitle("Delete Note");
+                        alertDialog.setMessage("Are you sure you want to delete this note?");
+                        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", (dialog12, which) -> {
+                                    alertDialog.dismiss();
+                                    dbHelper.deleteNote(note.getId());
+                                    dialog.dismiss();
+                                    Toast toast = Toast.makeText(this, "Note deleted", Toast.LENGTH_SHORT);
+                                    toast.show();
+                                    showNotes();
+                                }
+                        );
+                        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", (dialog12, which) -> {
+                                    alertDialog.dismiss();
+                                }
+                        );
+                        alertDialog.show();
+
+                    });
+                }
+                else {
+
+                    if (selectedNotes.contains(note)) {
+                        selectedNotes.remove(note);
+                    } else {
+                        selectedNotes.add(note);
+                        }
+                }
             });
 
-        });
-        adapter.setNoteOnClickListener( (note, position) -> {
-            Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-            dialog.setContentView(R.layout.activity_edit_note);
-            dialog.show();
 
-            ImageButton backButton = dialog.findViewById(R.id.backButton);
-            EditText noteTitle = dialog.findViewById(R.id.noteTitle);
-            EditText noteText = dialog.findViewById(R.id.noteText);
+            multiDeleteButton.setOnClickListener(v1 -> {
+                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                alertDialog.setTitle("Delete Notes");
+                alertDialog.setMessage("Are you sure you want to delete these notes?");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", (dialog12, which) -> {
+                    alertDialog.dismiss();
 
-            noteTitle.setText(note.getTitle());
-            noteText.setText(note.getText());
-
-            backButton.setOnClickListener(v1 -> {
-                String title = noteTitle.getText().toString();
-                String text = noteText.getText().toString();
-                dbHelper.updateNote(note.getId(), title, text);
-                showNotes();
-                dialog.dismiss();
+                    for (Note note : selectedNotes) {
+                        dbHelper.deleteNote(note.getId());
+                        selectedNotes.remove(note);
+                    }
+                    Toast toast = Toast.makeText(this, "Notes deleted", Toast.LENGTH_SHORT);
+                    toast.show();
+                    showNotes();
                 });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", (dialog12, which) -> {
+                    alertDialog.dismiss();
+                });
+                alertDialog.show();
+                multiSelectMode = false;
+                constraintLayout.setVisibility(View.GONE);
+                filterButton.setVisibility(View.VISIBLE);
+                addNoteButton.setVisibility(View.VISIBLE);
+                adapter.notifyDataSetChanged();
+                showNotes();
+            });
+            multiCancelButton.setOnClickListener(v1 -> {
+                multiSelectMode = false;
+                constraintLayout.setVisibility(View.GONE);
+                filterButton.setVisibility(View.VISIBLE);
+                addNoteButton.setVisibility(View.VISIBLE);
+                selectedNotes.clear();
+                adapter.notifyDataSetChanged();
+                showNotes();
+            });
 
-        });
+
 
         adapter.setOnNoteLongClickListener((note, position) -> {
-            //Allow user to select notes to delete
 
+            constraintLayout.setVisibility(View.VISIBLE);
+            filterButton.setVisibility(View.GONE);
+            addNoteButton.setVisibility(View.GONE);
+            multiSelectMode = true;
+
+            selectedNotes.add(note);
         });
 
 

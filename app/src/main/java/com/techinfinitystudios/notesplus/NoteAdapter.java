@@ -41,6 +41,11 @@ private DatabaseHelper dbHelper;
         this.clickListener = listener;
     }
 
+    public void setMultiNoteSelect(boolean multiNoteSelect) {
+
+
+    }
+
 
     @Override
     public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
