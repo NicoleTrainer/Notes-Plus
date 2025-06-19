@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Note> noteList;
     private List<Note> selectedNotes;
     private NoteAdapter adapter;
+    private CheckBox selectAllCheckBox;
 
     private RecyclerView recyclerView;
     private String filter = "";
@@ -69,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         addNoteButton = findViewById(R.id.addNoteButton);
         recyclerView = findViewById(R.id.notesRecyclerView);
 
+        selectAllCheckBox = findViewById(R.id.selectAllCheckBox);
         multiDeleteButton = findViewById(R.id.multiDeleteButton);
         multiCancelButton = findViewById(R.id.multiCancelButton);
         selectedNotes = new ArrayList<>();
@@ -79,9 +82,11 @@ public class MainActivity extends AppCompatActivity {
 
         int spanCount = Math.max(1, screenWidthDp / 160);
         noteList = new ArrayList<>();
-        adapter = new NoteAdapter(noteList, dbHelper);
+        adapter = new NoteAdapter(noteList, dbHelper, selectedNotes);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+
+
         showNotes();
 
         filterButton = findViewById(R.id.filterButton);
@@ -212,10 +217,16 @@ public class MainActivity extends AppCompatActivity {
 
                     if (selectedNotes.contains(note)) {
                         selectedNotes.remove(note);
+                        note.setSelectedItem(false);
+
                     } else {
                         selectedNotes.add(note);
-                        }
+                        note.setSelectedItem(true);
+
+                    }
                 }
+                adapter.setSelectedNotes(selectedNotes);
+                adapter.notifyDataSetChanged();
             });
 
 
@@ -228,7 +239,8 @@ public class MainActivity extends AppCompatActivity {
 
                     for (Note note : selectedNotes) {
                         dbHelper.deleteNote(note.getId());
-                        selectedNotes.remove(note);
+                        note.setSelectedItem(false);
+                        noteList.remove(note);
                     }
                     Toast toast = Toast.makeText(this, "Notes deleted", Toast.LENGTH_SHORT);
                     toast.show();
@@ -242,15 +254,24 @@ public class MainActivity extends AppCompatActivity {
                 constraintLayout.setVisibility(View.GONE);
                 filterButton.setVisibility(View.VISIBLE);
                 addNoteButton.setVisibility(View.VISIBLE);
+                selectAllCheckBox.setVisibility(View.GONE);
+                adapter.setMultiSelectMode(false);
+                adapter.setSelectedNotes(selectedNotes);
                 adapter.notifyDataSetChanged();
                 showNotes();
             });
             multiCancelButton.setOnClickListener(v1 -> {
-                multiSelectMode = false;
-                constraintLayout.setVisibility(View.GONE);
-                filterButton.setVisibility(View.VISIBLE);
-                addNoteButton.setVisibility(View.VISIBLE);
+                        multiSelectMode = false;
+                        constraintLayout.setVisibility(View.GONE);
+                        filterButton.setVisibility(View.VISIBLE);
+                        addNoteButton.setVisibility(View.VISIBLE);
+                        selectAllCheckBox.setVisibility(View.GONE);
+                        for (Note note : selectedNotes) {
+                            note.setSelectedItem(false);
+                        }
+                adapter.setMultiSelectMode(false);
                 selectedNotes.clear();
+                adapter.setSelectedNotes(selectedNotes);
                 adapter.notifyDataSetChanged();
                 showNotes();
             });
@@ -260,11 +281,30 @@ public class MainActivity extends AppCompatActivity {
         adapter.setOnNoteLongClickListener((note, position) -> {
 
             constraintLayout.setVisibility(View.VISIBLE);
+            selectAllCheckBox.setVisibility(View.VISIBLE);
             filterButton.setVisibility(View.GONE);
             addNoteButton.setVisibility(View.GONE);
             multiSelectMode = true;
 
             selectedNotes.add(note);
+            adapter.setSelectedNotes(selectedNotes);
+            note.setSelectedItem(true);
+            adapter.setMultiSelectMode(true);
+            adapter.notifyDataSetChanged();
+        });
+
+        selectAllCheckBox.setOnClickListener( v1 -> {
+            if(selectAllCheckBox.isChecked()){
+                selectedNotes.clear();
+                for (Note note : noteList) {
+                    note.setSelectedItem(true);
+                    selectedNotes.addAll(noteList);
+                }
+            }
+
+            adapter.setSelectedNotes(selectedNotes);
+            adapter.notifyDataSetChanged();
+
         });
 
 
