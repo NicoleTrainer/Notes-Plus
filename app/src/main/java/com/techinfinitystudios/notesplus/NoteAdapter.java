@@ -68,13 +68,14 @@ private boolean multiSelectMode = false;
         holder.noteTitle.setText(note.getTitle());
         holder.noteText.setText(note.getText());
 
+
         // Show or hide checkbox
         if (multiSelectMode) {
             holder.checkBox.setVisibility(View.VISIBLE);
         } else {
             holder.checkBox.setVisibility(View.GONE);
         }
-        checkBox.setChecked(note.isSelected());
+        holder.checkBox.setChecked(note.isSelected());
 
         // Prevent triggering the listener when setting the checked state
         holder.checkBox.setOnCheckedChangeListener(null);

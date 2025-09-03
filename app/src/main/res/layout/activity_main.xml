@@ -37,7 +37,8 @@
         app:layout_constraintBottom_toTopOf="@id/multiSelectToolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_note" />
+        tools:listitem="@layout/item_note"
+        android:backgroundTint="@color/white"/>
 
     <!-- Multi-Select Toolbar (at bottom above FABs) -->
     <androidx.constraintlayout.widget.ConstraintLayout

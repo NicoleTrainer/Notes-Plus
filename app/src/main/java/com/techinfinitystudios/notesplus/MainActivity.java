@@ -175,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
 
                     Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
                     dialog.setContentView(R.layout.activity_edit_note);
+                    dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent); // Remove grey dim
+
                     dialog.show();
 
                     ImageButton backButton = dialog.findViewById(R.id.backButton);
@@ -202,7 +204,9 @@ public class MainActivity extends AppCompatActivity {
                                     dialog.dismiss();
                                     Toast toast = Toast.makeText(this, "Note deleted", Toast.LENGTH_SHORT);
                                     toast.show();
+                                    dialog.dismiss();
                                     showNotes();
+
                                 }
                         );
                         alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", (dialog12, which) -> {
@@ -230,51 +234,35 @@ public class MainActivity extends AppCompatActivity {
             });
 
 
-            multiDeleteButton.setOnClickListener(v1 -> {
-                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-                alertDialog.setTitle("Delete Notes");
-                alertDialog.setMessage("Are you sure you want to delete these notes?");
-                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", (dialog12, which) -> {
-                    alertDialog.dismiss();
+        multiDeleteButton.setOnClickListener(v1 -> {
+            AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+            alertDialog.setTitle("Delete Notes");
+            alertDialog.setMessage("Are you sure you want to delete these notes?");
+            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", (dialog12, which) -> {
+                alertDialog.dismiss();
 
-                    for (Note note : selectedNotes) {
-                        dbHelper.deleteNote(note.getId());
-                        note.setSelectedItem(false);
-                        noteList.remove(note);
-                    }
-                    Toast toast = Toast.makeText(this, "Notes deleted", Toast.LENGTH_SHORT);
-                    toast.show();
-                    showNotes();
-                });
-                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", (dialog12, which) -> {
-                    alertDialog.dismiss();
-                });
-                alertDialog.show();
+                for (Note note : new ArrayList<>(selectedNotes)) {
+                    dbHelper.deleteNote(note.getId());  // Must actually delete from DB
+                }
+
+                selectedNotes.clear();
                 multiSelectMode = false;
                 constraintLayout.setVisibility(View.GONE);
                 filterButton.setVisibility(View.VISIBLE);
                 addNoteButton.setVisibility(View.VISIBLE);
                 selectAllCheckBox.setVisibility(View.GONE);
+
+                showNotes();  // Reload notes from DB
                 adapter.setMultiSelectMode(false);
                 adapter.setSelectedNotes(selectedNotes);
                 adapter.notifyDataSetChanged();
-                showNotes();
+
+                Toast.makeText(this, "Notes deleted", Toast.LENGTH_SHORT).show();
             });
-            multiCancelButton.setOnClickListener(v1 -> {
-                        multiSelectMode = false;
-                        constraintLayout.setVisibility(View.GONE);
-                        filterButton.setVisibility(View.VISIBLE);
-                        addNoteButton.setVisibility(View.VISIBLE);
-                        selectAllCheckBox.setVisibility(View.GONE);
-                        for (Note note : selectedNotes) {
-                            note.setSelectedItem(false);
-                        }
-                adapter.setMultiSelectMode(false);
-                selectedNotes.clear();
-                adapter.setSelectedNotes(selectedNotes);
-                adapter.notifyDataSetChanged();
-                showNotes();
-            });
+
+            alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", (dialog12, which) -> alertDialog.dismiss());
+            alertDialog.show();
+        });
 
 
 
@@ -298,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
                 selectedNotes.clear();
                 for (Note note : noteList) {
                     note.setSelectedItem(true);
-                    selectedNotes.addAll(noteList);
+                    selectedNotes.add(note);
                 }
             }
 

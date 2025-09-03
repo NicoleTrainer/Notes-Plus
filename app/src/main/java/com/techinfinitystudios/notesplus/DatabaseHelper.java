@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public class DatabaseHelper extends SQLiteOpenHelper{
     private static final String DATABASE_NAME = "note.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -29,7 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
 
-    public long insertNote(String title, String text) {
+    public void insertNote(String title, String text) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -41,7 +41,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
 
         db.close();
-        return id;
     }
 
     public void deleteNote(long id) {
