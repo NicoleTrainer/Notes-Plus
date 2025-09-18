@@ -1,7 +1,6 @@
 # Note+
 
-Note+ is a simple note-taking application designed to help users organize their thoughts, ideas, and reminders in one place.  
-It provides a clean interface with realistic note styling, making your notes look like real paper notes.  
+Note+ is a simple note-taking application designed to help users organize their thoughts, ideas, and reminders in one place.
 
 ## Features
 - 📝 Create, edit, and delete notes
